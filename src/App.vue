@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { fetchData, type DoggoType, type ResponseType } from './api'
+import { fetchData, fetchGroups, type DoggoType, type BreedsType, type GroupsResponseType } from './api'
 
-const request = ref<ResponseType | null>(null)
+const request = ref<BreedsType | null>(null)
+const groupeRequest = ref<GroupsResponseType | null>(null)
 
 const handleClick = async (url: string) => {
   const response = await fetchData({ url })
@@ -28,6 +29,13 @@ const handleClickResume = (item: DoggoType) => {
   })
 }
 
+const handleClickGroup = async (group: any) => {
+  const response = await fetchGroups({ query: `/${group.id}` })
+  if (response !== null) {
+    
+  }
+}
+
 onMounted(async () => {
   const response = await fetchData({ query: '?page[size]=8' })
   if (response !== null) {
@@ -37,12 +45,29 @@ onMounted(async () => {
     })
     request.value = response
   }
+
+  const groupResponse = await fetchGroups({ query: '' })
+  if (groupResponse !== null) {
+    groupeRequest.value = groupResponse
+  }
 })
 </script>
 
 <template>
   <div>
-    <h1 class="heading">Doggos Project</h1>
+    <h1 class="heading">
+      <span>🐶</span>
+      Doggos
+    </h1>
+    <h4 class="sub-heading">Groups</h4>
+    <ul class="list-group">
+      <li v-for="(item, key) in groupeRequest?.data" :key="key" class="list-group-item">
+        <button @click="handleClickGroup(item)">
+          {{ item.attributes.name }}
+        </button>
+      </li>
+    </ul>
+    <h4 class="sub-heading">Breeds</h4>
     <ul class="list">
       <li v-for="(item, key) in request?.data" class="list-item" :key="key">
         <h4 class="list-item-title">
