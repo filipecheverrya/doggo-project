@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { fetchData, fetchGroups, type DoggoType, type BreedsType, type GroupsResponseType } from './api'
+import { fetchData, type DoggoType, type BreedsType, type FactsType, fetchFacts } from './api'
 
 const request = ref<BreedsType | null>(null)
-const groupeRequest = ref<GroupsResponseType | null>(null)
+const facts = ref<FactsType | null>(null)
+const loader = ref(false)
 
-const handleClick = async (url: string) => {
-  const response = await fetchData({ url })
-  if (response !== null) {
-    response.data.map((item) => {
-      item.visible = false
-      return item
-    })
-    request.value = response
+const handleClickPagination = async (url: string) => {
+  try {
+    loader.value = true
+    const response = await fetchData({ url })
+    if (response !== null) {
+      response.data.map((item) => {
+        item.visible = false
+        return item
+      })
+      request.value = response
+    }
+  } finally {
+    loader.value = false
   }
 }
 
@@ -29,44 +35,36 @@ const handleClickResume = (item: DoggoType) => {
   })
 }
 
-const handleClickGroup = async (group: any) => {
-  const response = await fetchGroups({ query: `/${group.id}` })
-  if (response !== null) {
-    
-  }
-}
-
 onMounted(async () => {
-  const response = await fetchData({ query: '?page[size]=8' })
-  if (response !== null) {
-    response.data.map((item) => {
-      item.visible = false
-      return item
-    })
-    request.value = response
-  }
+  try {
+    loader.value = true
+    const response = await fetchData({ query: '?page[size]=8' })
+    if (response !== null) {
+      response.data.map((item) => {
+        item.visible = false
+        return item
+      })
+      request.value = response
+    }
 
-  const groupResponse = await fetchGroups({ query: '' })
-  if (groupResponse !== null) {
-    groupeRequest.value = groupResponse
+    const factsResponse = await fetchFacts()
+    if (factsResponse !== null) {
+      facts.value = factsResponse
+    }
+  } finally {
+    loader.value = false
   }
 })
 </script>
 
 <template>
-  <div>
+  <div v-if="!loader">
     <h1 class="heading">
       <span>🐶</span>
       Doggos
     </h1>
-    <h4 class="sub-heading">Groups</h4>
-    <ul class="list-group">
-      <li v-for="(item, key) in groupeRequest?.data" :key="key" class="list-group-item">
-        <button @click="handleClickGroup(item)">
-          {{ item.attributes.name }}
-        </button>
-      </li>
-    </ul>
+    <h4 class="sub-heading">Facts</h4>
+    <p>{{ facts?.data[0]?.attributes.body }}</p>
     <h4 class="sub-heading">Breeds</h4>
     <ul class="list">
       <li v-for="(item, key) in request?.data" class="list-item" :key="key">
@@ -103,7 +101,7 @@ onMounted(async () => {
     <ul class="pagination">
       <li v-show="request?.meta.pagination.prev">
         <button 
-          @click="handleClick(request?.links.prev!)" 
+          @click="handleClickPagination(request?.links.prev!)" 
           :disabled="!request?.meta.pagination.prev"
         >
           {{ request?.meta.pagination.prev }}
@@ -111,7 +109,7 @@ onMounted(async () => {
       </li>
       <li>
         <button 
-          @click="handleClick(request?.links.current!)" 
+          @click="handleClickPagination(request?.links.current!)" 
           disabled
         >
           {{ request?.meta.pagination.current }}
@@ -119,7 +117,7 @@ onMounted(async () => {
       </li>
       <li v-show="request?.meta.pagination.next">
         <button 
-          @click="handleClick(request?.links.next!)" 
+          @click="handleClickPagination(request?.links.next!)" 
           :disabled="!request?.meta.pagination.next"
         >
           {{ request?.meta.pagination.next }}
@@ -127,8 +125,7 @@ onMounted(async () => {
       </li>
     </ul>
   </div>
+  <div v-else>
+    <h2 class="sub-heading">Loading...</h2>
+  </div>
 </template>
-
-<style scoped>
-
-</style>

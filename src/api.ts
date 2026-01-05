@@ -1,6 +1,17 @@
 const BASE = 'https://dogapi.dog/api/v2'
 const BREEDS = BASE + '/breeds'
 const GROUPS = BASE + '/groups'
+const FACTS = BASE + '/facts'
+
+export type FactsType = {
+  data: {
+    id: string
+    type: string
+    attributes: {
+      body: string
+    }
+  }[]
+}
 
 export type GroupsResponseType = {
   data: GroupsType[]
@@ -85,6 +96,17 @@ export const fetchGroups = async ({ url, query = ""}: FetchDataType): Promise<Gr
   try {
     const resp = await fetch(url || GROUPS + query)
     const data = resp.json()
+    return data
+  } catch (err) {
+    console.log(err)
+    return null
+  }
+}
+
+export const fetchFacts = async (query = '?limit=1'): Promise<FactsType | null> => {
+  try {
+    const resp = await fetch(FACTS + query)
+    const data = await resp.json()
     return data
   } catch (err) {
     console.log(err)
